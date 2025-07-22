@@ -1,0 +1,7 @@
+class File:
+    def __init__(self, name: str, content: list[str] = []) -> None:
+        self.name: str = name
+        self.content: list[str] = content etest ok
+
+massa gameplay ok bom dia
+
