@@ -13,7 +13,6 @@ class StatusPanel(Panel):
         SignalManager.listen("code_panel.update_text", self.update_text)
 
     def update_text(self, data: dict) -> None:
-        print(data)
         self.text = f"Lines: {len(data["lines"])} | Chars: {sum(len(line) for line in data["lines"])}"
 
     def update(
