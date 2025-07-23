@@ -28,9 +28,9 @@ class IDE:
                 GroupPanel(
                     [
                         BlankPanel(),
-                        CodePanel("test/test2.txt"),
+                        ExplorerPanel(),
                         GroupPanel(
-                            [CodePanel("test/test1.txt"), BlankPanel()],
+                            [CodePanel(), BlankPanel()],
                             [7, 3],
                             direction="v",
                         ),
@@ -48,6 +48,8 @@ class IDE:
         self.folder: Folder = Folder("test")
         for file in self.folder.files:
             SignalManager.emit("get_file.post", {"file": file})
+        SignalManager.emit("get_folder.post", {"folder": self.folder})
+
         SignalManager.listen("update_text.post", self.on_update_text)
 
     def on_update_text(self, data: dict) -> None:

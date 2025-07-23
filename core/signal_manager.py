@@ -10,6 +10,8 @@ class SignalManager:
             "update_text.get": [],
             "update_text.post": [],
             "get_file.post": [],
+            "get_folder.post": [],
+            "open_file.post": [],
         }
 
     @classmethod

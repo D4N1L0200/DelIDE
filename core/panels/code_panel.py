@@ -4,25 +4,35 @@ from ..signal_manager import SignalManager
 
 
 class CodePanel(Panel):
-    def __init__(self, file_name: str) -> None:
+    def __init__(self) -> None:
         self.font: pygame.font.Font = pygame.font.Font(
             "assets/fonts/undefined-medium.ttf", 20
         )
         self.lines: list[str] = [""]
-        self.file_name: str = file_name
+        self.file_path: str = ""
 
         SignalManager.listen("update_text.get", self.to_get_file)
         SignalManager.listen("get_file.post", self.on_get_file)
+        SignalManager.listen("open_file.post", self.on_open_file)
 
     def to_get_file(self, data: dict) -> None:
         SignalManager.emit(
             "update_text.post",
-            {"file_name": self.file_name, "lines": self.lines},
+            {"file_name": self.file_path, "lines": self.lines},
         )
 
     def on_get_file(self, data: dict) -> None:
-        if data["file"].name == self.file_name:
+        if data["file"].path == self.file_path:
             self.lines = data["file"].read()
+
+    def on_open_file(self, data: dict) -> None:
+        self.file_path = data["file"].path
+        self.lines = data["file"].read()
+
+        SignalManager.emit(
+            "update_text.post",
+            {"file_name": self.file_path, "lines": self.lines},
+        )
 
     def on_active(self) -> None:
         self.to_get_file({})
@@ -45,7 +55,7 @@ class CodePanel(Panel):
 
                     SignalManager.emit(
                         "update_text.post",
-                        {"file_name": self.file_name, "lines": self.lines},
+                        {"file_name": self.file_path, "lines": self.lines},
                     )
                     events.remove(event)
 
