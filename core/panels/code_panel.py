@@ -16,6 +16,9 @@ class CodePanel(Panel):
         SignalManager.listen("open_file.post", self.on_open_file)
 
     def to_get_file(self, data: dict) -> None:
+        if not self.file_path:
+            return
+
         SignalManager.emit(
             "update_text.post",
             {"file_name": self.file_path, "lines": self.lines},

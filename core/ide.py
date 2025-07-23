@@ -45,7 +45,7 @@ class IDE:
         )
 
         # Data
-        self.folder: Folder = Folder("test")
+        self.folder: Folder = Folder("demo")
         for file in self.folder.files:
             SignalManager.emit("get_file.post", {"file": file})
         SignalManager.emit("get_folder.post", {"folder": self.folder})

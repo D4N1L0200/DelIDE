@@ -1,7 +1,6 @@
 import pygame
 from . import Panel
-from ..file import File
-from ..signal_manager import SignalManager
+from .. import File, Folder, SignalManager
 
 
 class ExplorerPanel(Panel):
@@ -9,18 +8,33 @@ class ExplorerPanel(Panel):
         self.font: pygame.font.Font = pygame.font.Font(
             "assets/fonts/undefined-medium.ttf", 20
         )
-        self.folder: str = ""
+        self.folder: Folder
+        self.folders: list[Folder] = []
         self.files: list[File] = []
         self.lines: list[str] = []
 
         SignalManager.listen("get_folder.post", self.on_get_folder)
 
     def on_get_folder(self, data: dict) -> None:
-        self.folder = data["folder"].path
-        self.files = data["folder"].files
+        def get_content(folder: Folder) -> None:
+            if folder.path_list[-1] == "__pycache__":
+                return
 
-        self.lines = [f"{self.folder}/"]
-        self.lines.extend([file.name for file in self.files])
+            self.folders.extend(folder.folders)
+            self.files.extend(folder.files)
+
+            self.lines.append(f"{folder.path_list[-1]}/")
+            for nested_folder in folder.folders:
+                get_content(nested_folder)
+            self.lines.extend([file.name for file in folder.files])
+            self.lines.append("")
+
+        self.folder = data["folder"]
+
+        self.folders = []
+        self.files = []
+
+        get_content(self.folder)
 
     def update(
         self,
@@ -31,10 +45,11 @@ class ExplorerPanel(Panel):
         active: bool = False,
     ) -> list[pygame.event.Event]:
         line_height: int = self.font.get_height()
+        lines: list[str] = [line for line in self.lines if line]
 
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                for i, line in enumerate(self.lines):
+                for i, line in enumerate(lines):
                     if "/" in line:
                         continue
 
@@ -42,9 +57,9 @@ class ExplorerPanel(Panel):
                         pos[0], pos[1] + line_height * i, width, line_height
                     )
                     if rect.collidepoint(event.pos):
-                        print(f"Opening file {self.lines[i]} at {self.folder}")
+                        print(f"Opening file {lines[i]} at {self.folder.path_list[-1]}")
                         for file in self.files:
-                            if file.name == self.lines[i]:
+                            if file.name == lines[i]:
                                 SignalManager.emit("open_file.post", {"file": file})
                                 break
 
@@ -57,7 +72,12 @@ class ExplorerPanel(Panel):
 
         line_height: int = self.font.get_height()
         tab: int = 0
-        for i, line in enumerate(self.lines):
+        i: int = 0
+        for line in self.lines:
+            if not line:
+                tab -= 1
+                continue
+
             line = " " * tab + line
             surface.blit(
                 self.font.render(line, False, (255, 255, 255)),
@@ -65,6 +85,7 @@ class ExplorerPanel(Panel):
             )
             if "/" in line:
                 tab += 1
+            i += 1
 
         pygame.draw.rect(
             surface,
