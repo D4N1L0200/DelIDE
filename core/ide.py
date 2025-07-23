@@ -47,10 +47,10 @@ class IDE:
         # Data
         self.folder: Folder = Folder("demo")
         for file in self.folder.files:
-            SignalManager.emit("get_file.post", {"file": file})
-        SignalManager.emit("get_folder.post", {"folder": self.folder})
+            SignalManager.emit("get_file", {"file": file})
+        SignalManager.emit("get_folder", {"folder": self.folder})
 
-        SignalManager.listen("update_text.post", self.on_update_text)
+        SignalManager.listen("update_text", self.on_update_text)
 
     def on_update_text(self, data: dict) -> None:
         pygame.display.set_caption(f"Del IDE - {data["file_name"].split("/")[-1]}")

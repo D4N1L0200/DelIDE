@@ -12,7 +12,7 @@ class Folder:
 
         self.load()
 
-        SignalManager.listen("update_text.post", self.on_update_text)
+        SignalManager.listen("update_text", self.on_update_text)
 
     def on_update_text(self, data: dict) -> None:
         for file in self.files:

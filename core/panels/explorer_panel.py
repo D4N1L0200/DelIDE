@@ -13,7 +13,7 @@ class ExplorerPanel(Panel):
         self.files: list[File] = []
         self.lines: list[str] = []
 
-        SignalManager.listen("get_folder.post", self.on_get_folder)
+        SignalManager.listen("get_folder", self.on_get_folder)
 
     def on_get_folder(self, data: dict) -> None:
         def get_content(folder: Folder) -> None:
@@ -60,7 +60,7 @@ class ExplorerPanel(Panel):
                         print(f"Opening file {lines[i]} at {self.folder.path_list[-1]}")
                         for file in self.files:
                             if file.name == lines[i]:
-                                SignalManager.emit("open_file.post", {"file": file})
+                                SignalManager.emit("open_file", {"file": file})
                                 break
 
         return events
@@ -78,7 +78,7 @@ class ExplorerPanel(Panel):
                 tab -= 1
                 continue
 
-            line = " " * tab + line
+            line = "| " * tab + line
             surface.blit(
                 self.font.render(line, False, (255, 255, 255)),
                 (10, line_height * i),

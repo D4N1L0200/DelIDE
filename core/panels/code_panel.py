@@ -11,16 +11,16 @@ class CodePanel(Panel):
         self.lines: list[str] = [""]
         self.file_path: str = ""
 
-        SignalManager.listen("update_text.get", self.to_get_file)
-        SignalManager.listen("get_file.post", self.on_get_file)
-        SignalManager.listen("open_file.post", self.on_open_file)
+        SignalManager.register("update_text", self.to_get_file)
+        SignalManager.listen("get_file", self.on_get_file)
+        SignalManager.listen("open_file", self.on_open_file)
 
-    def to_get_file(self, data: dict) -> None:
+    def to_get_file(self) -> None:
         if not self.file_path:
             return
 
         SignalManager.emit(
-            "update_text.post",
+            "update_text",
             {"file_name": self.file_path, "lines": self.lines},
         )
 
@@ -33,12 +33,12 @@ class CodePanel(Panel):
         self.lines = data["file"].read()
 
         SignalManager.emit(
-            "update_text.post",
+            "update_text",
             {"file_name": self.file_path, "lines": self.lines},
         )
 
     def on_active(self) -> None:
-        self.to_get_file({})
+        self.to_get_file()
 
     def update(
         self,
@@ -57,7 +57,7 @@ class CodePanel(Panel):
                         self.lines[-1] += event.unicode
 
                     SignalManager.emit(
-                        "update_text.post",
+                        "update_text",
                         {"file_name": self.file_path, "lines": self.lines},
                     )
                     events.remove(event)
