@@ -51,6 +51,8 @@ class IDE:
         SignalManager.listen("code_panel.update_text.post", self.on_update_text)
 
     def on_update_text(self, data: dict) -> None:
+        pygame.display.set_caption(f"Del IDE - {data["file_name"].split("/")[-1]}")
+
         for file in self.folder.files:
             if file.name == data["file_name"]:
                 file.write(data["lines"])

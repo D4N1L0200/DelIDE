@@ -1,17 +1,8 @@
-Great! Building your own IDE is a fantastic learning project. Here's a **step-by-step plan** for implementing an IDE from scratch, starting from zero, in **priority order**—from trivial UI needs to more advanced features:
-
----
-
 ## 🧱 **Phase 1: Core Infrastructure and Editor Basics**
-
-These are the foundational features you *must* implement first.
 
 ### 1. **Basic GUI and Window**
 
-* App window with a title bar
 * Menu bar (File, Edit, View, etc.)
-* Status bar (optional but common)
-* Basic layout system (e.g., editor pane + sidebar)
 
 ### 2. **File I/O**
 
@@ -116,20 +107,3 @@ Not essential, but polish your IDE.
 * File explorer sidebar
 * Workspace saving/loading (remember open files and window state)
 * Split view editing
-
----
-
-## 🛠️ Suggested Tech Stack
-
-Depending on your preferred language:
-
-### If using Python:
-
-* GUI: `tkinter`, `PyQt5`, or `dearpygui`
-* Text rendering: `tk.Text`, `QPlainTextEdit`
-* Syntax highlighting: `Pygments`, or custom regex-based
-* Terminal: `subprocess` + a scrollable text widget
-
----
-
-If you want, I can help scaffold the first window and editor widget too. Would you like that?
