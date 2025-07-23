@@ -11,12 +11,12 @@ class CodePanel(Panel):
         self.lines: list[str] = [""]
         self.file_name: str = file_name
 
-        SignalManager.listen("code_panel.update_text.get", self.to_get_file)
-        SignalManager.listen("ide.get_file.post", self.on_get_file)
+        SignalManager.listen("update_text.get", self.to_get_file)
+        SignalManager.listen("get_file.post", self.on_get_file)
 
     def to_get_file(self, data: dict) -> None:
         SignalManager.emit(
-            "code_panel.update_text.post",
+            "update_text.post",
             {"file_name": self.file_name, "lines": self.lines},
         )
 
@@ -44,7 +44,7 @@ class CodePanel(Panel):
                         self.lines[-1] += event.unicode
 
                     SignalManager.emit(
-                        "code_panel.update_text.post",
+                        "update_text.post",
                         {"file_name": self.file_name, "lines": self.lines},
                     )
                     events.remove(event)

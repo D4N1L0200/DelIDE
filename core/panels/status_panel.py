@@ -10,8 +10,8 @@ class StatusPanel(Panel):
         )
         self.text: str = "Lines: NaN | Chars: NaN"
 
-        SignalManager.emit("code_panel.update_text.get", {})
-        SignalManager.listen("code_panel.update_text.post", self.update_text)
+        SignalManager.emit("update_text.get", {})
+        SignalManager.listen("update_text.post", self.update_text)
 
     def update_text(self, data: dict) -> None:
         self.text = f"Lines: {len(data["lines"])} | Chars: {sum(len(line) for line in data["lines"])}"
