@@ -4,21 +4,33 @@ from ..signal_manager import SignalManager
 
 
 class CodePanel(Panel):
-    def __init__(self) -> None:
+    def __init__(self, file_name: str) -> None:
         self.font: pygame.font.Font = pygame.font.Font(
             "assets/fonts/undefined-medium.ttf", 20
         )
         self.lines: list[str] = [""]
+        self.file_name: str = file_name
 
-        SignalManager.emit("ide.get_file.get", {})
+        SignalManager.listen("code_panel.update_text.get", self.to_get_file)
         SignalManager.listen("ide.get_file.post", self.on_get_file)
 
+    def to_get_file(self, data: dict) -> None:
+        SignalManager.emit(
+            "code_panel.update_text.post",
+            {"file_name": self.file_name, "lines": self.lines},
+        )
+
     def on_get_file(self, data: dict) -> None:
-        self.lines = data["file"]
+        if data["file"].name == self.file_name:
+            self.lines = data["file"].read()
+
+    def on_active(self) -> None:
+        self.to_get_file({})
 
     def update(
         self,
         events: list[pygame.event.Event],
+        pos: tuple[int, int],
         width: int,
         height: int,
         active: bool = False,
@@ -31,13 +43,18 @@ class CodePanel(Panel):
                     else:
                         self.lines[-1] += event.unicode
 
-                    SignalManager.emit("code_panel.update_text", {"lines": self.lines})
+                    SignalManager.emit(
+                        "code_panel.update_text.post",
+                        {"file_name": self.file_name, "lines": self.lines},
+                    )
                     events.remove(event)
 
         return events
 
-    def draw(self, width: int, height: int, active: bool = False) -> pygame.Surface:
-        surface: pygame.Surface = super().draw(width, height, active)
+    def draw(
+        self, pos: tuple[int, int], width: int, height: int, active: bool = False
+    ) -> pygame.Surface:
+        surface: pygame.Surface = super().draw(pos, width, height, active)
 
         line_height: int = self.font.get_height()
         for i, line in enumerate(self.lines):

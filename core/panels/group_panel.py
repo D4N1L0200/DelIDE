@@ -1,5 +1,6 @@
 import pygame
 from . import Panel
+from ..signal_manager import SignalManager
 
 
 class GroupPanel(Panel):
@@ -16,40 +17,56 @@ class GroupPanel(Panel):
 
         self.active_panel: int = 0
 
-    def get_layouts(self, width: int, height: int) -> list[tuple[pygame.Rect, Panel]]:
+    def get_layouts(
+        self, width: int, height: int, pos: tuple[int, int]
+    ) -> list[tuple[pygame.Rect, Panel]]:
         layouts = []
         offset = 0
+        total = sum(self.scales)
+        x: int = pos[0]
+        y: int = pos[1]
+
         for scale, panel in zip(self.scales, self.panels):
+            norm_scale = scale / total
             if self.direction == "v":
-                h = int(height * scale)
-                rect = pygame.Rect(0, offset, width, h)
+                h = int(height * norm_scale)
+                rect = pygame.Rect(x, y + offset, width, h)
                 offset += h
             else:
-                w = int(width * scale)
-                rect = pygame.Rect(offset, 0, w, height)
+                w = int(width * norm_scale)
+                rect = pygame.Rect(x + offset, y, w, height)
                 offset += w
             layouts.append((rect, panel))
+
         return layouts
 
     def update(
         self,
         events: list[pygame.event.Event],
+        pos: tuple[int, int],
         width: int,
         height: int,
         active: bool = False,
     ) -> list[pygame.event.Event]:
-        self.layouts = self.get_layouts(width, height)
+        self.layouts = self.get_layouts(width, height, pos)
         handled: list[pygame.event.Event] = []
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 for i, (rect, panel) in enumerate(self.layouts):
                     if rect.collidepoint(event.pos):
                         self.active_panel = i
+                        panel.on_active()
                         handled.append(event)
                         break
 
-        for i, panel in enumerate(self.panels):
-            events = panel.update(events, width, height, active=(i == self.active_panel and active))
+        for i, (rect, panel) in enumerate(self.layouts):
+            events = panel.update(
+                events,
+                rect.topleft,
+                rect.width,
+                rect.height,
+                active=(i == self.active_panel and active),
+            )
 
         for event in handled:
             if event in events:
@@ -57,11 +74,16 @@ class GroupPanel(Panel):
 
         return events
 
-    def draw(self, width: int, height: int, active: bool = False) -> pygame.Surface:
+    def draw(
+        self, pos: tuple[int, int], width: int, height: int, active: bool = False
+    ) -> pygame.Surface:
         surface = pygame.Surface((width, height))
         for i, (rect, panel) in enumerate(self.layouts):
             panel_surface = panel.draw(
-                rect.width, rect.height, active=(i == self.active_panel and active)
+                rect.topleft,
+                rect.width,
+                rect.height,
+                active=(i == self.active_panel and active),
             )
-            surface.blit(panel_surface, rect.topleft)
+            surface.blit(panel_surface, (rect.left - pos[0], rect.top - pos[1]))
         return surface

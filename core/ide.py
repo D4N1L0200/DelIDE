@@ -1,6 +1,6 @@
 import pygame
 from .panels import *
-from .file import File
+from .folder import Folder
 from .signal_manager import SignalManager
 
 
@@ -28,9 +28,9 @@ class IDE:
                 GroupPanel(
                     [
                         BlankPanel(),
-                        BlankPanel(),
+                        CodePanel("test/test2.txt"),
                         GroupPanel(
-                            [CodePanel(), BlankPanel()],
+                            [CodePanel("test/test1.txt"), BlankPanel()],
                             [7, 3],
                             direction="v",
                         ),
@@ -45,12 +45,16 @@ class IDE:
         )
 
         # Data
-        self.file: File = File("test.txt")
-        SignalManager.emit("ide.get_file.post", {"file": self.file.read()})
-        SignalManager.listen("code_panel.update_text", self.on_update_text)
-        
+        self.folder: Folder = Folder("test")
+        for file in self.folder.files:
+            SignalManager.emit("ide.get_file.post", {"file": file})
+        SignalManager.listen("code_panel.update_text.post", self.on_update_text)
+
     def on_update_text(self, data: dict) -> None:
-        self.file.write(data["lines"])
+        for file in self.folder.files:
+            if file.name == data["file_name"]:
+                file.write(data["lines"])
+                break
 
     def run(self) -> None:
         while self.running:
@@ -65,13 +69,13 @@ class IDE:
             self.surface.fill((0, 0, 0))
 
             unhandled_events: list[pygame.event.Event] = self.panel.update(
-                self.events, self.width, self.height, active=True
+                self.events, (0, 0), self.width, self.height, active=True
             )
             if len(unhandled_events) > 0:
                 print(f"\nUnhandled events: {unhandled_events}")
 
             panel_surface: pygame.Surface = self.panel.draw(
-                self.width, self.height, active=True
+                (0, 0), self.width, self.height, active=True
             )
             self.surface.blit(panel_surface, (0, 0))
 

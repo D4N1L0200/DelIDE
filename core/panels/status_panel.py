@@ -10,7 +10,8 @@ class StatusPanel(Panel):
         )
         self.text: str = "Lines: NaN | Chars: NaN"
 
-        SignalManager.listen("code_panel.update_text", self.update_text)
+        SignalManager.emit("code_panel.update_text.get", {})
+        SignalManager.listen("code_panel.update_text.post", self.update_text)
 
     def update_text(self, data: dict) -> None:
         self.text = f"Lines: {len(data["lines"])} | Chars: {sum(len(line) for line in data["lines"])}"
@@ -18,14 +19,17 @@ class StatusPanel(Panel):
     def update(
         self,
         events: list[pygame.event.Event],
+        pos: tuple[int, int],
         width: int,
         height: int,
         active: bool = False,
     ) -> list[pygame.event.Event]:
         return events
 
-    def draw(self, width: int, height: int, active: bool = False) -> pygame.Surface:
-        surface: pygame.Surface = super().draw(width, height, active)
+    def draw(
+        self, pos: tuple[int, int], width: int, height: int, active: bool = False
+    ) -> pygame.Surface:
+        surface: pygame.Surface = super().draw(pos, width, height, active)
 
         surface.blit(
             self.font.render(self.text, False, (255, 255, 255)),

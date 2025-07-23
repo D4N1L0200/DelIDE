@@ -9,14 +9,17 @@ class BlankPanel(Panel):
     def update(
         self,
         events: list[pygame.event.Event],
+        pos: tuple[int, int],
         width: int,
         height: int,
         active: bool = False,
     ) -> list[pygame.event.Event]:
         return events
 
-    def draw(self, width: int, height: int, active: bool = False) -> pygame.Surface:
-        surface: pygame.Surface = super().draw(width, height, active)
+    def draw(
+        self, pos: tuple[int, int], width: int, height: int, active: bool = False
+    ) -> pygame.Surface:
+        surface: pygame.Surface = super().draw(pos, width, height, active)
 
         pygame.draw.rect(
             surface,
