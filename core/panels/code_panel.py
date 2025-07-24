@@ -53,6 +53,11 @@ class CodePanel(Panel):
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         self.lines.append("")
+                    elif event.key == pygame.K_BACKSPACE:
+                        if self.lines[-1]:
+                            self.lines[-1] = self.lines[-1][:-1]
+                        else:
+                            self.lines.pop()
                     else:
                         self.lines[-1] += event.unicode
 

@@ -1,6 +1,7 @@
 import pygame
 from . import Panel
-from .. import File, Folder, SignalManager
+from .. import SignalManager
+from ..data import Folder, File
 
 
 class ExplorerPanel(Panel):
@@ -9,8 +10,6 @@ class ExplorerPanel(Panel):
             "assets/fonts/undefined-medium.ttf", 20
         )
         self.folder: Folder
-        self.folders: list[Folder] = []
-        self.files: list[File] = []
         self.lines: list[str] = []
 
         SignalManager.listen("get_folder", self.on_get_folder)
@@ -20,9 +19,6 @@ class ExplorerPanel(Panel):
             if folder.path_list[-1] == "__pycache__":
                 return
 
-            self.folders.extend(folder.folders)
-            self.files.extend(folder.files)
-
             self.lines.append(f"{folder.path_list[-1]}/")
             for nested_folder in folder.folders:
                 get_content(nested_folder)
@@ -30,9 +26,6 @@ class ExplorerPanel(Panel):
             self.lines.append("")
 
         self.folder = data["folder"]
-
-        self.folders = []
-        self.files = []
 
         get_content(self.folder)
 
@@ -57,11 +50,8 @@ class ExplorerPanel(Panel):
                         pos[0], pos[1] + line_height * i, width, line_height
                     )
                     if rect.collidepoint(event.pos):
-                        print(f"Opening file {lines[i]} at {self.folder.path_list[-1]}")
-                        for file in self.files:
-                            if file.name == lines[i]:
-                                SignalManager.emit("open_file", {"file": file})
-                                break
+                        if file := self.folder.search(lines[i]):
+                            SignalManager.emit("open_file", {"file": file})
 
         return events
 

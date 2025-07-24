@@ -1,6 +1,6 @@
 import os
 from .file import File
-from .signal_manager import SignalManager
+from .. import SignalManager
 
 
 class Folder:
@@ -26,3 +26,14 @@ class Folder:
                 self.files.append(File(self.path, file))
             else:
                 self.folders.append(Folder(os.path.join(self.path, file)))
+
+    def search(self, name: str) -> File | None:
+        for file in self.files:
+            if file.name == name:
+                return file
+
+        for folder in self.folders:
+            if file := folder.search(name):
+                return file
+
+        return None
