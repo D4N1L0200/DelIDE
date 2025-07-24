@@ -7,13 +7,14 @@ class SignalManager:
     @classmethod
     def register_signals(cls) -> None:
         cls.emmiters = {
-            "update_text": [],
+            "p.code.update_file": [],
         }
         cls.listeners = {
-            "update_text": [],
-            "get_file": [],
-            "get_folder": [],
-            "open_file": [],
+            "p.code.update_file": [],
+            "d.get_folder": [],
+            "p.explorer.open_file": [],
+            "o.exit": [],
+            "o.save": [],
         }
 
     @classmethod

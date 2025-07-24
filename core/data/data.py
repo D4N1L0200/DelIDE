@@ -1,5 +1,6 @@
 import os
-from .folder import Folder
+from . import File, Folder
+from typing import Optional
 from .. import SignalManager
 
 
@@ -8,12 +9,9 @@ class Data:
         self.path: str = path.replace("\\", "/")
         self.path_list: list[str] = self.path.split("/")
         self.folder: Folder = Folder(self.path)
+        self.folder.load()
 
-        SignalManager.emit("get_folder", {"folder": self.folder})
-        SignalManager.listen("update_text", self.on_update_text)
+        SignalManager.emit("d.get_folder", {"folder": self.folder})
 
-    def on_update_text(self, data: dict) -> None:
-        for file in self.folder.files:
-            if file.name == data["file_name"]:
-                file.write(data["lines"])
-                break
+    def save(self, file: File) -> None:
+        file.save()

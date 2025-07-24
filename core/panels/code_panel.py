@@ -1,5 +1,7 @@
 import pygame
 from . import Panel
+from ..data import File
+from typing import Optional
 from ..signal_manager import SignalManager
 
 
@@ -8,33 +10,30 @@ class CodePanel(Panel):
         self.font: pygame.font.Font = pygame.font.Font(
             "assets/fonts/undefined-medium.ttf", 20
         )
+        self.file: Optional[File] = None
         self.lines: list[str] = [""]
         self.file_path: str = ""
 
-        SignalManager.register("update_text", self.to_get_file)
-        SignalManager.listen("get_file", self.on_get_file)
-        SignalManager.listen("open_file", self.on_open_file)
+        SignalManager.register("p.code.update_file", self.to_get_file)
+        SignalManager.listen("p.explorer.open_file", self.on_open_file)
 
     def to_get_file(self) -> None:
         if not self.file_path:
             return
 
         SignalManager.emit(
-            "update_text",
-            {"file_name": self.file_path, "lines": self.lines},
+            "p.code.update_file",
+            {"file": self.file},
         )
 
-    def on_get_file(self, data: dict) -> None:
-        if data["file"].path == self.file_path:
-            self.lines = data["file"].read()
-
     def on_open_file(self, data: dict) -> None:
+        self.file = data["file"]
         self.file_path = data["file"].path
         self.lines = data["file"].read()
 
         SignalManager.emit(
-            "update_text",
-            {"file_name": self.file_path, "lines": self.lines},
+            "p.code.update_file",
+            {"file": self.file},
         )
 
     def on_active(self) -> None:
@@ -50,6 +49,11 @@ class CodePanel(Panel):
     ) -> list[pygame.event.Event]:
         if active:
             for event in events:
+                if not self.file:
+                    events.remove(event)
+
+                    continue
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         self.lines.append("")
@@ -61,9 +65,11 @@ class CodePanel(Panel):
                     else:
                         self.lines[-1] += event.unicode
 
+                    self.file.write(self.lines)
+
                     SignalManager.emit(
-                        "update_text",
-                        {"file_name": self.file_path, "lines": self.lines},
+                        "p.code.update_file",
+                        {"file": self.file},
                     )
                     events.remove(event)
 

@@ -1,20 +1,33 @@
 import pygame
 from . import Panel
-from ..signal_manager import SignalManager
+from typing import Union
 
 
 class GroupPanel(Panel):
-    def __init__(self, panels: list[Panel], ratios: list[int], direction: str) -> None:
+    def __init__(
+        self, panels: list[Panel], ratios: Union[float, list[int]], direction: str
+    ) -> None:
         self.panels: list[Panel] = panels
-        self.ratios: list[int] = ratios
         self.direction: str = direction.lower()
         if self.direction not in ["h", "v"]:
             raise ValueError("Direction must be either 'h' or 'v'")
 
-        total: int = sum(self.ratios)
-        self.scales: list[float] = [ratio / total for ratio in self.ratios]
-        self.layouts: list[tuple[pygame.Rect, Panel]] = []
+        self.scales: list[float] = []
+        if isinstance(ratios, float):
+            if not 0 < ratios <= 1:
+                raise ValueError(
+                    "Ratio must be a float between 0 (exclusive) and 1 (inclusive)"
+                )
 
+            count = len(panels)
+            self.scales = [ratios for _ in range(count)]
+        elif isinstance(ratios, list):
+            total = sum(ratios)
+            self.scales = [r / total for r in ratios]
+        else:
+            raise TypeError("ratios must be float or list[int]")
+
+        self.layouts: list[tuple[pygame.Rect, Panel]] = []
         self.active_panel: int = 0
 
     def get_layouts(
@@ -22,12 +35,11 @@ class GroupPanel(Panel):
     ) -> list[tuple[pygame.Rect, Panel]]:
         layouts = []
         offset = 0
-        total = sum(self.scales)
         x: int = pos[0]
         y: int = pos[1]
 
         for scale, panel in zip(self.scales, self.panels):
-            norm_scale = scale / total
+            norm_scale = scale / 1
             if self.direction == "v":
                 h = int(height * norm_scale)
                 rect = pygame.Rect(x, y + offset, width, h)

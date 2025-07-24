@@ -54,7 +54,7 @@ class ExplorerPanel(Panel):
         self.folder: ExFolder
         self.items: list[ExItem] = []
 
-        SignalManager.listen("get_folder", self.on_get_folder)
+        SignalManager.listen("d.get_folder", self.on_get_folder)
 
     def on_get_folder(self, data: dict) -> None:
         def get_content(folder: ExFolder) -> ExFolder:
@@ -123,7 +123,7 @@ class ExplorerPanel(Panel):
                     events.remove(mouse_event)
                     mouse_event = None
                     draw_idx += 1
-                    SignalManager.emit("open_file", {"file": file})
+                    SignalManager.emit("p.explorer.open_file", {"file": file})
                     return
 
                 draw_idx += 1
@@ -156,7 +156,7 @@ class ExplorerPanel(Panel):
                 draw_folder(sub, tab + 1)
 
             for file in folder.files:
-                text = "| " * (tab + 1) + file.name
+                text = f"{"| " * (tab + 1)}{file.name}{"" if file.saved else "*"}"
                 surface.blit(
                     self.font.render(text, False, (255, 255, 255)),
                     (10, text_height * draw_idx),

@@ -1,6 +1,5 @@
 import os
 from .file import File
-from .. import SignalManager
 
 
 class Folder:
@@ -12,20 +11,16 @@ class Folder:
 
         self.load()
 
-        SignalManager.listen("update_text", self.on_update_text)
-
-    def on_update_text(self, data: dict) -> None:
-        for file in self.files:
-            if file.path == data["file_name"]:
-                file.write(data["lines"])
-                break
-
     def load(self) -> None:
-        for file in os.listdir(self.path):
-            if os.path.isfile(os.path.join(self.path, file)):
-                self.files.append(File(self.path, file))
+        for file_name in os.listdir(self.path):
+            if os.path.isfile(os.path.join(self.path, file_name)):
+                file: File = File(self.path, file_name)
+                file.load()
+                self.files.append(file)
             else:
-                self.folders.append(Folder(os.path.join(self.path, file)))
+                folder: Folder = Folder(os.path.join(self.path, file_name))
+                folder.load()
+                self.folders.append(folder)
 
     def search(self, path: str, depth: int = 0) -> File | None:
         path_list: list[str] = path.split("/")

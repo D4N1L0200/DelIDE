@@ -1,8 +1,7 @@
 import pygame
 from .panels import *
-from .data import Data, File
+from .data import Data
 from . import SignalManager
-from typing import Optional
 
 
 class IDE:
@@ -23,32 +22,23 @@ class IDE:
         pygame.display.set_caption("Del IDE")
 
         # UI
-        self.panel: Panel = GroupPanel(
+        self.panel: Panel = ExpandGroupPanel(
             [
                 GroupPanel(
                     [
-                        ButtonPanel("New", ""),
-                        ButtonPanel("Open", ""),
-                        ButtonPanel("Save", "o.save"),
-                        ButtonPanel("Exit", "o.exit"),
+                        ButtonPanel("New"),
+                        ButtonPanel("Open"),
+                        ButtonPanel("Save"),
+                        ButtonPanel("Exit"),
                     ],
-                    0.08,
+                    [1, 1, 1, 1],
                     direction="h",
                 ),
-                GroupPanel(
+                ExpandGroupPanel(
                     [
-                        GroupPanel(
-                            [
-                                ButtonPanel("E", ""),
-                                ButtonPanel("S", ""),
-                                ButtonPanel("G", ""),
-                                ButtonPanel("R", ""),
-                            ],
-                            0.1,
-                            direction="v",
-                        ),
+                        BlankPanel(),
                         ExplorerPanel(),
-                        GroupPanel(
+                        ExpandGroupPanel(
                             [CodePanel(), BlankPanel()],
                             [7, 3],
                             direction="v",
@@ -65,25 +55,11 @@ class IDE:
 
         # Data
         self.data: Data = Data("demo")
-        self.last_file: Optional[File] = None
 
-        SignalManager.listen("p.code.update_file", self.on_update_file)
-        SignalManager.listen("o.save", self.on_save)
-        SignalManager.listen("o.exit", self.on_exit)
+        SignalManager.listen("p.code.update_file", self.on_update_text)
 
-    def on_update_file(self, data: dict) -> None:
-        file: File = data["file"]
-        pygame.display.set_caption(f"Del IDE - {file.path.split("/")[-1]}")
-        self.last_file = file
-
-    def on_save(self, data: dict) -> None:
-        if self.last_file is None:
-            return
-
-        self.data.save(self.last_file)
-
-    def on_exit(self, data: dict) -> None:
-        self.running = False
+    def on_update_text(self, data: dict) -> None:
+        pygame.display.set_caption(f"Del IDE - {data["file_path"].split("/")[-1]}")
 
     def run(self) -> None:
         while self.running:

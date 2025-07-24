@@ -4,22 +4,24 @@ class File:
         self.name: str = name
         self.path: str = f"{self.folder}/{self.name}"
         self.content: list[str] = []
+        self.saved: bool = False
 
     def load(self) -> None:
         self.content = []
         with open(self.path, "r") as file:
             for line in file.readlines():
                 self.content.append(line.replace("\n", ""))
+        self.saved = True
 
     def save(self) -> None:
         with open(self.path, "w") as file:
             for line in self.content:
                 file.write(line + "\n")
+        self.saved = True
 
     def write(self, content: list[str]) -> None:
         self.content = content
-        self.save()
+        self.saved = False
 
     def read(self) -> list[str]:
-        self.load()
         return self.content
