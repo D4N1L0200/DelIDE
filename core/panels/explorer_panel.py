@@ -1,7 +1,49 @@
 import pygame
 from . import Panel
 from .. import SignalManager
-from ..data import Folder, File
+from ..data import Folder
+
+
+class ExItem:
+    def __init__(
+        self,
+        name: str,
+        path: str,
+        size: int = 1,
+        folder_ref: "ExFolder | None" = None,
+        is_dedent: bool = False,
+    ) -> None:
+        self.name: str = name
+        self.path: str = path
+        self.size: int = size
+        self.folder_ref: "ExFolder | None" = folder_ref
+        self.is_dedent: bool = is_dedent
+
+
+class ExFolder(Folder):
+    def __init__(self, folder: Folder) -> None:
+        super().__init__(folder.path)
+
+        self.ex_folders: list[ExFolder] = []
+        self.open: bool = True
+
+    def get_items(self) -> list[ExItem]:
+        items: list[ExItem] = [
+            ExItem(
+                f"{self.path_list[-1]}/",
+                "",
+                len(self.folders) + len(self.files),
+                folder_ref=self,
+            )
+        ]
+
+        for folder in self.ex_folders:
+            items.extend(folder.get_items())
+
+        items.extend([ExItem(file.name, file.path) for file in self.files])
+        items.append(ExItem("", "", is_dedent=True))
+
+        return items
 
 
 class ExplorerPanel(Panel):
@@ -9,25 +51,24 @@ class ExplorerPanel(Panel):
         self.font: pygame.font.Font = pygame.font.Font(
             "assets/fonts/undefined-medium.ttf", 20
         )
-        self.folder: Folder
-        self.lines: list[str] = []
+        self.folder: ExFolder
+        self.items: list[ExItem] = []
 
         SignalManager.listen("get_folder", self.on_get_folder)
 
     def on_get_folder(self, data: dict) -> None:
-        def get_content(folder: Folder) -> None:
+        def get_content(folder: ExFolder) -> ExFolder:
             if folder.path_list[-1] == "__pycache__":
-                return
+                return folder
 
-            self.lines.append(f"{folder.path_list[-1]}/")
             for nested_folder in folder.folders:
-                get_content(nested_folder)
-            self.lines.extend([file.name for file in folder.files])
-            self.lines.append("")
+                ex_nested_folder: ExFolder = get_content(ExFolder(nested_folder))
+                folder.ex_folders.append(ex_nested_folder)
 
-        self.folder = data["folder"]
+            return folder
 
-        get_content(self.folder)
+        self.folder = ExFolder(data["folder"])
+        self.folder = get_content(self.folder)
 
     def update(
         self,
@@ -37,22 +78,57 @@ class ExplorerPanel(Panel):
         height: int,
         active: bool = False,
     ) -> list[pygame.event.Event]:
-        line_height: int = self.font.get_height()
-        lines: list[str] = [line for line in self.lines if line]
+        text_height = self.font.get_height()
+        mouse_event = None
 
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                for i, line in enumerate(lines):
-                    if "/" in line:
-                        continue
+                mouse_event = event
+                break
 
-                    rect: pygame.Rect = pygame.Rect(
-                        pos[0], pos[1] + line_height * i, width, line_height
-                    )
-                    if rect.collidepoint(event.pos):
-                        if file := self.folder.search(lines[i]):
-                            SignalManager.emit("open_file", {"file": file})
+        draw_idx = 0
 
+        def handle_folder(folder: ExFolder, tab: int) -> None:
+            nonlocal draw_idx, mouse_event
+
+            if not mouse_event:
+                return
+
+            rect = pygame.Rect(
+                pos[0], pos[1] + text_height * draw_idx, width, text_height
+            )
+            if rect.collidepoint(mouse_event.pos):
+                folder.open = not folder.open
+                events.remove(mouse_event)
+                mouse_event = None
+                return
+
+            draw_idx += 1
+
+            if not folder.open:
+                return
+
+            for sub in folder.ex_folders:
+                handle_folder(sub, tab + 1)
+
+            for file in folder.files:
+                if not mouse_event:
+                    draw_idx += 1
+                    continue
+
+                rect = pygame.Rect(
+                    pos[0], pos[1] + text_height * draw_idx, width, text_height
+                )
+                if rect.collidepoint(mouse_event.pos):
+                    events.remove(mouse_event)
+                    mouse_event = None
+                    draw_idx += 1
+                    SignalManager.emit("open_file", {"file": file})
+                    return
+
+                draw_idx += 1
+
+        handle_folder(self.folder, 0)
         return events
 
     def draw(
@@ -60,22 +136,34 @@ class ExplorerPanel(Panel):
     ) -> pygame.Surface:
         surface: pygame.Surface = super().draw(pos, width, height, active)
 
-        line_height: int = self.font.get_height()
-        tab: int = 0
-        i: int = 0
-        for line in self.lines:
-            if not line:
-                tab -= 1
-                continue
+        text_height: int = self.font.get_height()
+        draw_idx: int = 0
 
-            line = "| " * tab + line
+        def draw_folder(folder: ExFolder, tab: int) -> None:
+            nonlocal draw_idx
+
+            text = f"{"| " * tab}{"v" if folder.open else ">"} {folder.path_list[-1]}/"
             surface.blit(
-                self.font.render(line, False, (255, 255, 255)),
-                (10, line_height * i),
+                self.font.render(text, False, (255, 255, 255)),
+                (10, text_height * draw_idx),
             )
-            if "/" in line:
-                tab += 1
-            i += 1
+            draw_idx += 1
+
+            if not folder.open:
+                return
+
+            for sub in folder.ex_folders:
+                draw_folder(sub, tab + 1)
+
+            for file in folder.files:
+                text = "| " * (tab + 1) + file.name
+                surface.blit(
+                    self.font.render(text, False, (255, 255, 255)),
+                    (10, text_height * draw_idx),
+                )
+                draw_idx += 1
+
+        draw_folder(self.folder, 0)
 
         pygame.draw.rect(
             surface,

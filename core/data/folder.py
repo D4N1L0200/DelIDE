@@ -27,13 +27,20 @@ class Folder:
             else:
                 self.folders.append(Folder(os.path.join(self.path, file)))
 
-    def search(self, name: str) -> File | None:
-        for file in self.files:
-            if file.name == name:
-                return file
+    def search(self, path: str, depth: int = 0) -> File | None:
+        path_list: list[str] = path.split("/")
+
+        if path_list[depth] != self.path_list[depth]:
+            return None
+
+        if depth + 2 == len(path_list):
+            for file in self.files:
+                if file.path == path:
+                    return file
+            return None
 
         for folder in self.folders:
-            if file := folder.search(name):
+            if file := folder.search(path, depth + 1):
                 return file
 
         return None
