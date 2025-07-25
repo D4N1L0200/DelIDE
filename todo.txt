@@ -1,9 +1,3 @@
-## 🧱 **Phase 1: Core Infrastructure and Editor Basics**
-
-### 1. **Basic GUI and Window**
-
-* Menu bar (File, Edit, View, etc.)
-
 ### 2. **File I/O**
 
 * "Open File…" dialog

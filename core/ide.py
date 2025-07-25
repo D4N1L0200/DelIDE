@@ -110,13 +110,20 @@ class IDE:
                 elif event.type == pygame.KEYDOWN:
                     event.mod &= ~(pygame.KMOD_NUM | pygame.KMOD_CAPS)
 
-                    if event.mod == pygame.KMOD_NONE:
+                    if event.mod & pygame.KMOD_CTRL:
+                        if event.key == pygame.K_o:
+                            SignalManager.emit("o.open", {})
+                        elif event.key == pygame.K_s:
+                            SignalManager.emit("o.save", {})
+                    else:
                         if event.key == pygame.K_F5:
                             self.data.load(
                                 "C:\\Users\\danil\\Documents\\Dev\\DelIDE\\demo"
                             )
-                        else:
+                        elif event.unicode:
                             self.events.append(event)
+                        else:
+                            print(f"Unhandled key: {event.key}")
 
             self.surface.fill((0, 0, 0))
 

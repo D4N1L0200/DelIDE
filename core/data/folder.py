@@ -12,16 +12,12 @@ class Folder:
         self.loaded: bool = False
 
     def load(self) -> None:
-        print(f"Loading {self.path}")
-
         for file_name in os.listdir(self.path):
             if os.path.isfile(os.path.join(self.path, file_name)):
-                print(f"- Loading file {self.path}/{file_name}")
                 file: File = File(self.path, file_name)
                 file.load()
                 self.files.append(file)
             else:
-                print(f"- Loading folder {self.path}/{file_name}")
                 folder: Folder = Folder(os.path.join(self.path, file_name))
                 self.folders.append(folder)
 
