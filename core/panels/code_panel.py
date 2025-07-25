@@ -29,7 +29,12 @@ class CodePanel(Panel):
     def on_open_file(self, data: dict) -> None:
         self.file = data["file"]
         self.file_path = data["file"].path
-        self.lines = data["file"].read()
+
+        if self.file:
+            if not self.file.byte_file:
+                self.lines = data["file"].read()
+            else:
+                self.lines = ["Byte file"]
 
         SignalManager.emit(
             "p.code.update_file",
@@ -49,7 +54,7 @@ class CodePanel(Panel):
     ) -> list[pygame.event.Event]:
         if active:
             for event in events:
-                if not self.file:
+                if not self.file or self.file.byte_file:
                     events.remove(event)
 
                     continue
@@ -82,10 +87,16 @@ class CodePanel(Panel):
 
         line_height: int = self.font.get_height()
         for i, line in enumerate(self.lines):
-            surface.blit(
-                self.font.render(line, False, (255, 255, 255)),
-                (10, line_height * i),
-            )
+            try:
+                surface.blit(
+                    self.font.render(line, False, (255, 255, 255)),
+                    (10, line_height * i),
+                )
+            except ValueError:
+                print(f"Error rendering line {i}: {line}")
+                assert self.file
+                self.file.byte_file = True
+                self.lines = ["Byte file"]
 
         pygame.draw.rect(
             surface,

@@ -13,8 +13,9 @@ class SignalManager:
             "p.code.update_file": [],
             "d.get_folder": [],
             "p.explorer.open_file": [],
-            "o.exit": [],
+            "o.open": [],
             "o.save": [],
+            "o.exit": [],
         }
 
     @classmethod

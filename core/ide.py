@@ -4,6 +4,17 @@ from .data import Data, File
 from . import SignalManager
 from typing import Optional
 
+import tkinter as tk
+from tkinter import filedialog
+
+
+def open_folder_dialog() -> str | None:
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    folder_path = filedialog.askdirectory(title="Select Folder")
+    root.destroy()
+    return folder_path if folder_path else None
+
 
 class IDE:
     def __init__(self) -> None:
@@ -11,11 +22,9 @@ class IDE:
         pygame.font.init()
 
         # Pygame
-        self.width: int = 1280
-        self.height: int = 720
-        self.surface: pygame.Surface = pygame.display.set_mode(
-            (self.width, self.height)
-        )
+        self.surface: pygame.Surface = pygame.display.set_mode((0, 0))
+        self.width: int = self.surface.get_width()
+        self.height: int = self.surface.get_height()
         self.fps: int = 60
         self.running: bool = True
         self.clock: pygame.time.Clock = pygame.time.Clock()
@@ -28,7 +37,7 @@ class IDE:
                 GroupPanel(
                     [
                         ButtonPanel("New", ""),
-                        ButtonPanel("Open", ""),
+                        ButtonPanel("Open", "o.open"),
                         ButtonPanel("Save", "o.save"),
                         ButtonPanel("Exit", "o.exit"),
                     ],
@@ -64,10 +73,11 @@ class IDE:
         )
 
         # Data
-        self.data: Data = Data("demo")
+        self.data: Data = Data()
         self.last_file: Optional[File] = None
 
         SignalManager.listen("p.code.update_file", self.on_update_file)
+        SignalManager.listen("o.open", self.on_open)
         SignalManager.listen("o.save", self.on_save)
         SignalManager.listen("o.exit", self.on_exit)
 
@@ -75,6 +85,11 @@ class IDE:
         file: File = data["file"]
         pygame.display.set_caption(f"Del IDE - {file.path.split("/")[-1]}")
         self.last_file = file
+
+    def on_open(self, data: dict) -> None:
+        selected = open_folder_dialog()
+        if selected:
+            self.data.load(selected)
 
     def on_save(self, data: dict) -> None:
         if self.last_file is None:

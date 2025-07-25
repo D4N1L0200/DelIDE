@@ -2,6 +2,7 @@ import pygame
 from . import Panel
 from .. import SignalManager
 from ..data import Folder
+from typing import Optional
 
 
 class ExItem:
@@ -50,9 +51,9 @@ class ExFolder(Folder):
 class ExplorerPanel(Panel):
     def __init__(self) -> None:
         self.font: pygame.font.Font = pygame.font.Font(
-            "assets/fonts/undefined-medium.ttf", 20
+            "assets/fonts/undefined-medium.ttf", 18
         )
-        self.folder: ExFolder
+        self.folder: Optional[ExFolder] = None
         self.items: list[ExItem] = []
         self.hovered_files: set[str] = set()
 
@@ -130,6 +131,9 @@ class ExplorerPanel(Panel):
 
                 draw_idx += 1
 
+        if self.folder is None:
+            return events
+
         handle_folder(self.folder, 0)
         return events
 
@@ -175,7 +179,8 @@ class ExplorerPanel(Panel):
                 )
                 draw_idx += 1
 
-        draw_folder(self.folder, 0)
+        if self.folder is not None:
+            draw_folder(self.folder, 0)
 
         pygame.draw.rect(
             surface,

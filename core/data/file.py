@@ -5,16 +5,23 @@ class File:
         self.path: str = f"{self.folder}/{self.name}"
         self.content: list[str] = []
         self.saved: bool = False
+        self.byte_file: bool = False
 
     def load(self) -> None:
         self.content = []
-        with open(self.path, "r") as file:
-            for line in file.readlines():
-                self.content.append(line.replace("\n", ""))
+        try:
+            with open(self.path, "r", encoding="utf-8") as file:
+                for line in file.readlines():
+                    self.content.append(line.replace("\n", ""))
+        except UnicodeDecodeError:
+            self.byte_file = True
         self.saved = True
 
     def save(self) -> None:
-        with open(self.path, "w") as file:
+        if self.byte_file:
+            return
+
+        with open(self.path, "w", encoding="utf-8") as file:
             for line in self.content:
                 file.write(line + "\n")
         self.saved = True
