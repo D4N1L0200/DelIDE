@@ -12,6 +12,7 @@ class SignalManager:
         cls.listeners = {
             "p.code.update_file": [],
             "d.get_folder": [],
+            "d.load_folder": [],
             "p.explorer.open_file": [],
             "o.open": [],
             "o.save": [],

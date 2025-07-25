@@ -108,7 +108,15 @@ class IDE:
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     self.events.append(event)
                 elif event.type == pygame.KEYDOWN:
-                    self.events.append(event)
+                    event.mod &= ~(pygame.KMOD_NUM | pygame.KMOD_CAPS)
+
+                    if event.mod == pygame.KMOD_NONE:
+                        if event.key == pygame.K_F5:
+                            self.data.load(
+                                "C:\\Users\\danil\\Documents\\Dev\\DelIDE\\demo"
+                            )
+                        else:
+                            self.events.append(event)
 
             self.surface.fill((0, 0, 0))
 

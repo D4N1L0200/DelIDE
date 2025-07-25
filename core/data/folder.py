@@ -1,5 +1,6 @@
 import os
 from .file import File
+from typing import Optional
 
 
 class Folder:
@@ -8,21 +9,25 @@ class Folder:
         self.path_list: list[str] = self.path.split("/")
         self.folders: list[Folder] = []
         self.files: list[File] = []
-
-        self.load()
+        self.loaded: bool = False
 
     def load(self) -> None:
+        print(f"Loading {self.path}")
+
         for file_name in os.listdir(self.path):
             if os.path.isfile(os.path.join(self.path, file_name)):
+                print(f"- Loading file {self.path}/{file_name}")
                 file: File = File(self.path, file_name)
                 file.load()
                 self.files.append(file)
             else:
+                print(f"- Loading folder {self.path}/{file_name}")
                 folder: Folder = Folder(os.path.join(self.path, file_name))
-                folder.load()
                 self.folders.append(folder)
 
-    def search(self, path: str, depth: int = 0) -> File | None:
+        self.loaded = True
+
+    def search_file(self, path: str, depth: int = 0) -> Optional[File]:
         path_list: list[str] = path.split("/")
 
         if path_list[depth] != self.path_list[depth]:
@@ -35,7 +40,27 @@ class Folder:
             return None
 
         for folder in self.folders:
-            if file := folder.search(path, depth + 1):
+            if file := folder.search_file(path, depth + 1):
                 return file
+
+        return None
+
+    def search_folder(
+        self, path: str, root_size: int, depth: int = 0
+    ) -> Optional["Folder"]:
+        path_list: list[str] = path.split("/")
+
+        if path_list[depth] != self.path_list[depth]:
+            return None
+
+        if depth + 1 == len(path_list) - root_size:
+            for folder in self.folders:
+                if folder.path == path:
+                    return folder
+            return None
+
+        for folder in self.folders:
+            if folder := folder.search_folder(path, root_size, depth + 1):
+                return folder
 
         return None

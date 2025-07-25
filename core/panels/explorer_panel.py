@@ -5,47 +5,17 @@ from ..data import Folder
 from typing import Optional
 
 
-class ExItem:
-    def __init__(
-        self,
-        name: str,
-        path: str,
-        size: int = 1,
-        folder_ref: "ExFolder | None" = None,
-        is_dedent: bool = False,
-    ) -> None:
-        self.name: str = name
-        self.path: str = path
-        self.size: int = size
-        self.folder_ref: "ExFolder | None" = folder_ref
-        self.is_dedent: bool = is_dedent
-
-
 class ExFolder(Folder):
     def __init__(self, folder: Folder) -> None:
         super().__init__(folder.path)
 
         self.ex_folders: list[ExFolder] = []
-        self.open: bool = True
+        self.open: bool = False
         self.hover: bool = False
 
-    def get_items(self) -> list[ExItem]:
-        items: list[ExItem] = [
-            ExItem(
-                f"{self.path_list[-1]}/",
-                "",
-                len(self.folders) + len(self.files),
-                folder_ref=self,
-            )
-        ]
-
-        for folder in self.ex_folders:
-            items.extend(folder.get_items())
-
-        items.extend([ExItem(file.name, file.path) for file in self.files])
-        items.append(ExItem("", "", is_dedent=True))
-
-        return items
+        self.folders = folder.folders
+        self.files = folder.files
+        self.loaded = folder.loaded
 
 
 class ExplorerPanel(Panel):
@@ -54,24 +24,37 @@ class ExplorerPanel(Panel):
             "assets/fonts/undefined-medium.ttf", 18
         )
         self.folder: Optional[ExFolder] = None
-        self.items: list[ExItem] = []
         self.hovered_files: set[str] = set()
 
         SignalManager.listen("d.get_folder", self.on_get_folder)
 
     def on_get_folder(self, data: dict) -> None:
-        def get_content(folder: ExFolder) -> ExFolder:
-            if folder.path_list[-1] == "__pycache__":
-                return folder
+        def get_content(
+            folder: ExFolder, old_folder: Optional[ExFolder] = None
+        ) -> ExFolder:
+            if not old_folder or not len(old_folder.ex_folders):
+                for nested_folder in folder.folders:
+                    ex_nested_folder: ExFolder = get_content(ExFolder(nested_folder))
+                    folder.ex_folders.append(ex_nested_folder)
+                
+                if not old_folder:
+                    return folder
 
-            for nested_folder in folder.folders:
-                ex_nested_folder: ExFolder = get_content(ExFolder(nested_folder))
+            for nested_folder, nested_old_folder in zip(
+                folder.folders, old_folder.ex_folders
+            ):
+                ex_nested_folder: ExFolder = get_content(
+                    ExFolder(nested_folder), nested_old_folder
+                )
                 folder.ex_folders.append(ex_nested_folder)
+
+            if old_folder:
+                folder.open = old_folder.open
 
             return folder
 
-        self.folder = ExFolder(data["folder"])
-        self.folder = get_content(self.folder)
+        new_folder: ExFolder = ExFolder(data["folder"])
+        self.folder = get_content(new_folder, self.folder)
 
     def update(
         self,
@@ -103,6 +86,9 @@ class ExplorerPanel(Panel):
 
             if mouse_event and folder_rect.collidepoint(mouse_event.pos):
                 folder.open = not folder.open
+                if not folder.loaded:
+                    SignalManager.emit("d.load_folder", {"path": folder.path})
+
                 events.remove(mouse_event)
                 mouse_event = None
 
