@@ -26,6 +26,7 @@ class ExFolder(Folder):
 
         self.ex_folders: list[ExFolder] = []
         self.open: bool = True
+        self.hover: bool = False
 
     def get_items(self) -> list[ExItem]:
         items: list[ExItem] = [
@@ -53,6 +54,7 @@ class ExplorerPanel(Panel):
         )
         self.folder: ExFolder
         self.items: list[ExItem] = []
+        self.hovered_files: set[str] = set()
 
         SignalManager.listen("d.get_folder", self.on_get_folder)
 
@@ -80,6 +82,7 @@ class ExplorerPanel(Panel):
     ) -> list[pygame.event.Event]:
         text_height = self.font.get_height()
         mouse_event = None
+        mouse_pos = pygame.mouse.get_pos()
 
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -91,17 +94,16 @@ class ExplorerPanel(Panel):
         def handle_folder(folder: ExFolder, tab: int) -> None:
             nonlocal draw_idx, mouse_event
 
-            if not mouse_event:
-                return
-
-            rect = pygame.Rect(
+            folder_rect = pygame.Rect(
                 pos[0], pos[1] + text_height * draw_idx, width, text_height
             )
-            if rect.collidepoint(mouse_event.pos):
+
+            folder.hover = folder_rect.collidepoint(mouse_pos)
+
+            if mouse_event and folder_rect.collidepoint(mouse_event.pos):
                 folder.open = not folder.open
                 events.remove(mouse_event)
                 mouse_event = None
-                return
 
             draw_idx += 1
 
@@ -112,19 +114,19 @@ class ExplorerPanel(Panel):
                 handle_folder(sub, tab + 1)
 
             for file in folder.files:
-                if not mouse_event:
-                    draw_idx += 1
-                    continue
-
-                rect = pygame.Rect(
+                file_rect = pygame.Rect(
                     pos[0], pos[1] + text_height * draw_idx, width, text_height
                 )
-                if rect.collidepoint(mouse_event.pos):
+
+                if file_rect.collidepoint(mouse_pos):
+                    self.hovered_files.add(file.path)
+                else:
+                    self.hovered_files.discard(file.path)
+
+                if mouse_event and file_rect.collidepoint(mouse_event.pos):
                     events.remove(mouse_event)
                     mouse_event = None
-                    draw_idx += 1
                     SignalManager.emit("p.explorer.open_file", {"file": file})
-                    return
 
                 draw_idx += 1
 
@@ -142,6 +144,11 @@ class ExplorerPanel(Panel):
         def draw_folder(folder: ExFolder, tab: int) -> None:
             nonlocal draw_idx
 
+            if folder.hover:
+                surface.fill(
+                    (80, 60, 120), (0, text_height * draw_idx, width, text_height)
+                )
+
             text = f"{"| " * tab}{"v" if folder.open else ">"} {folder.path_list[-1]}/"
             surface.blit(
                 self.font.render(text, False, (255, 255, 255)),
@@ -156,6 +163,11 @@ class ExplorerPanel(Panel):
                 draw_folder(sub, tab + 1)
 
             for file in folder.files:
+                if file.path in self.hovered_files:
+                    surface.fill(
+                        (80, 60, 120), (0, text_height * draw_idx, width, text_height)
+                    )
+
                 text = f"{"| " * (tab + 1)}{file.name}{"" if file.saved else "*"}"
                 surface.blit(
                     self.font.render(text, False, (255, 255, 255)),
