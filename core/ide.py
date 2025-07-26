@@ -117,13 +117,9 @@ class IDE:
                             SignalManager.emit("o.save", {})
                     else:
                         if event.key == pygame.K_F5:
-                            self.data.load(
-                                "C:\\Users\\danil\\Documents\\Dev\\DelIDE\\demo"
-                            )
-                        elif event.unicode:
-                            self.events.append(event)
+                            self.data.load("C:\\Users\\danil\\Documents\\Dev\\DelIDE")
                         else:
-                            print(f"Unhandled key: {event.key}")
+                            self.events.append(event)
 
             self.surface.fill((0, 0, 0))
 
